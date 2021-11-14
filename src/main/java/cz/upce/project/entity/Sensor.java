@@ -1,6 +1,7 @@
 package cz.upce.project.entity;
 
 import com.fasterxml.jackson.annotation.*;
+import cz.upce.project.dto.SensorType;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
@@ -16,13 +17,22 @@ public class Sensor {
     private Long id;
 
     @NotBlank
+    @Column
     private String sensorName;
 
-    private Integer value;
+    @Column
+    private String unit;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private SensorType sensorType = SensorType.OTHER;
 
     @ManyToOne
-    @JsonIgnore
     private Device device;
+
+    @OneToMany(mappedBy = "sensor")
+    @JsonIgnore
+    private Set<Measurement> measurements;
 
     public Long getId() {
         return id;
@@ -40,12 +50,20 @@ public class Sensor {
         this.sensorName = sensorName;
     }
 
-    public Integer getValue() {
-        return value;
+    public String getUnit() {
+        return unit;
     }
 
-    public void setValue(Integer amount) {
-        this.value = amount;
+    public void setUnit(String unit) {
+        this.unit = unit;
+    }
+
+    public SensorType getSensorType() {
+        return sensorType;
+    }
+
+    public void setSensorType(SensorType sensorType) {
+        this.sensorType = sensorType;
     }
 
     public Device getDevice() {
@@ -56,6 +74,14 @@ public class Sensor {
         this.device = device;
     }
 
+    public Set<Measurement> getMeasurements() {
+        return measurements;
+    }
+
+    public void setMeasurements(Set<Measurement> measurements) {
+        this.measurements = measurements;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -63,11 +89,12 @@ public class Sensor {
         Sensor sensor = (Sensor) o;
         return Objects.equals(id, sensor.id) &&
                 Objects.equals(sensorName, sensor.sensorName) &&
-                Objects.equals(value, sensor.value);
+                Objects.equals(unit, sensor.unit) &&
+                Objects.equals(sensorType, sensor.sensorType);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, sensorName, value);
+        return Objects.hash(id, sensorName, unit, sensorType);
     }
 }

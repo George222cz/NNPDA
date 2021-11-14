@@ -2,8 +2,10 @@ package cz.upce.project.service;
 
 import cz.upce.project.dto.DeviceDto;
 import cz.upce.project.entity.Device;
+import cz.upce.project.entity.Sensor;
 import cz.upce.project.repository.DeviceRepository;
 import cz.upce.project.repository.UserRepository;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
@@ -17,9 +19,12 @@ public class DeviceServiceImpl {
 
     private final UserRepository userRepository;
 
-    public DeviceServiceImpl(DeviceRepository deviceRepository, UserRepository userRepository) {
+    private final SensorServiceImpl sensorService;
+
+    public DeviceServiceImpl(DeviceRepository deviceRepository, UserRepository userRepository, SensorServiceImpl sensorService) {
         this.deviceRepository = deviceRepository;
         this.userRepository = userRepository;
+        this.sensorService = sensorService;
     }
 
     public List<Device> getAllDevices(){
@@ -33,16 +38,23 @@ public class DeviceServiceImpl {
         device.setDescription(dto.getDescription());
         device.setUser(userRepository.findById(dto.getUserId()).orElseThrow(() -> new UsernameNotFoundException("User not found")));
         deviceRepository.save(device);
-        return deviceRepository.findAll();
+        return deviceRepository.findDevicesByUser_Id(dto.getUserId());
     }
 
     public List<Device> deleteDevice(Long deviceId){
-        Optional<Device> byId = deviceRepository.findById(deviceId);
-        if (byId.isPresent()) {
+        Optional<Device> device = deviceRepository.findById(deviceId);
+        if (device.isPresent()) {
+            for (Sensor sensor : device.get().getSensors()) {
+                sensorService.deleteSensor(sensor.getId());
+            }
             deviceRepository.deleteById(deviceId);
-            return deviceRepository.findAll();
+            return deviceRepository.findDevicesByUser_Id(device.get().getUser().getId());
         } else {
             throw new NoSuchElementException("Device with ID: " + deviceId + " was not found!");
         }
+    }
+
+    public List<Device> getAllDevicesForUser(Long userId) {
+        return deviceRepository.findDevicesByUser_Id(userId);
     }
 }

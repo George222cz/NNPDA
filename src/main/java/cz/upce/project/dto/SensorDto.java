@@ -6,7 +6,9 @@ public class SensorDto {
 
     private String sensorName;
 
-    private Integer value;
+    private String unit;
+
+    private String sensorType;
 
     private Long deviceId;
 
@@ -26,12 +28,20 @@ public class SensorDto {
         this.sensorName = sensorName;
     }
 
-    public Integer getValue() {
-        return value;
+    public String getUnit() {
+        return unit;
     }
 
-    public void setValue(Integer value) {
-        this.value = value;
+    public void setUnit(String unit) {
+        this.unit = unit;
+    }
+
+    public String getSensorType() {
+        return sensorType;
+    }
+
+    public void setSensorType(String sensorType) {
+        this.sensorType = sensorType;
     }
 
     public Long getDeviceId() {

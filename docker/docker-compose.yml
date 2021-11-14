@@ -1,0 +1,90 @@
+version: '3.7'
+
+services:
+  mysql:
+    image: mysql:latest
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: admin
+      MYSQL_DATABASE: project
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_db:/var/lib/mysql
+    security_opt:
+      - seccomp:unconfined
+    networks:
+      - elastic
+
+  elasticsearch:
+    image: elasticsearch:7.14.2
+    container_name: elasticsearch
+    environment:
+      - xpack.monitoring.enabled:true
+      - xpack.monitoring.elasticsearch.url:http://elasticsearch:9200
+      - xpack.management.enabled:true
+      - dead_letter_queue.enable:true
+      - discovery.type=single-node
+      - discovery.zen.ping.unicast.hosts=elasticsearch
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms2g -Xmx2g"
+      - "ELASTIC_HOST=localhost:9200"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    cap_add:
+      - IPC_LOCK
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+      - "9600:9600"
+    expose:
+      - "9200"
+    networks:
+      - elastic
+
+  kibana:
+    container_name: kibana
+    image: kibana:7.14.2
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - ELASTICSEARCH_USERNAME=elastic
+      - ELASTICSEARCH_PASSWORD=root
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+    networks:
+      - elastic
+
+  logstash:
+    image: logstash:7.14.2
+    depends_on:
+      - mysql
+      - elasticsearch
+    restart: always
+    volumes:
+      - ./logstash/pipeline/:/usr/share/logstash/pipeline/
+      - ./logstash/config/pipelines.yml:/usr/share/logstash/config/pipelines.yml
+      - ./logstash/config/queries/:/usr/share/logstash/config/queries/
+      - ./mysql-connector-java-8.0.26.jar:/usr/share/logstash/logstash-core/lib/jars/mysql-connector-java-8.0.26.jar
+    networks:
+      - elastic
+
+volumes:
+  mysql_db:
+    driver: local
+  elasticsearch-data:
+    driver: local
+
+networks:
+  elastic:
+    driver: bridge

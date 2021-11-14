@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface SensorRepository extends JpaRepository<Sensor,Long> {
 
-    Sensor findSensorBySensorNameContains(String contains);
+    List<Sensor> findSensorsByDevice_User_Id(Long userId);
 
     List<Sensor> findSensorsByDeviceId(Long deviceId);
 }

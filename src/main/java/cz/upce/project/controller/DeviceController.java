@@ -32,6 +32,11 @@ public class DeviceController {
         return deviceService.getAllDevices();
     }
 
+    @GetMapping("{userId}")
+    public List<Device> getAllDevicesForUser(@PathVariable Long userId){
+        return deviceService.getAllDevicesForUser(userId);
+    }
+
     @RequestMapping(method = {RequestMethod.POST,RequestMethod.PUT})
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     public List<Device> createOrUpdateDevice(@RequestBody DeviceDto dto){

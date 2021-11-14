@@ -1,8 +1,10 @@
 package cz.upce.project.service;
 
 import cz.upce.project.dto.SensorDto;
+import cz.upce.project.dto.SensorType;
 import cz.upce.project.entity.Sensor;
 import cz.upce.project.entity.Device;
+import cz.upce.project.repository.MeasurementRepository;
 import cz.upce.project.repository.SensorRepository;
 import cz.upce.project.repository.DeviceRepository;
 import org.springframework.http.ResponseEntity;
@@ -18,9 +20,12 @@ public class SensorServiceImpl {
 
     private final DeviceRepository deviceRepository;
 
-    public SensorServiceImpl(SensorRepository sensorRepository, DeviceRepository deviceRepository) {
+    private final MeasurementRepository measurementRepository;
+
+    public SensorServiceImpl(SensorRepository sensorRepository, DeviceRepository deviceRepository, MeasurementRepository measurementRepository) {
         this.sensorRepository = sensorRepository;
         this.deviceRepository = deviceRepository;
+        this.measurementRepository = measurementRepository;
     }
 
     public List<Sensor> getAllSensors(){
@@ -50,7 +55,8 @@ public class SensorServiceImpl {
             Sensor sensor = new Sensor();
             sensor.setId(dto.getId());
             sensor.setSensorName(dto.getSensorName());
-            sensor.setValue(dto.getValue());
+            sensor.setUnit(dto.getUnit());
+            sensor.setSensorType(SensorType.valueOf(dto.getSensorType()));
             sensor.setDevice(device.get());
             sensorRepository.save(sensor);
             return ResponseEntity.ok().build();
@@ -62,10 +68,15 @@ public class SensorServiceImpl {
     public List<Sensor> deleteSensor(Long sensorId){
         Optional<Sensor> sensor = sensorRepository.findById(sensorId);
         if (sensor.isPresent()) {
+            measurementRepository.deleteAll(sensor.get().getMeasurements());
             sensorRepository.deleteById(sensorId);
-            return sensorRepository.findAll();
+            return sensorRepository.findSensorsByDevice_User_Id(sensor.get().getDevice().getUser().getId());
         } else {
             throw new NoSuchElementException("Sensor with ID: " + sensorId + " was not found!");
         }
+    }
+
+    public List<Sensor> getAllSensorForUser(Long userId) {
+        return sensorRepository.findSensorsByDevice_User_Id(userId);
     }
 }

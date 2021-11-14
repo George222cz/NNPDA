@@ -43,8 +43,12 @@ public class SensorController {
         return sensorService.getSensorsByDeviceId(deviceId);
     }
 
+    @GetMapping("/user/{userId}")
+    public List<Sensor> getAllSensorForUser(@PathVariable Long userId){
+        return sensorService.getAllSensorForUser(userId);
+    }
+
     @GetMapping("{sensorId}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public Sensor getSensorById(@PathVariable Long sensorId){
         return sensorService.getSensorById(sensorId);
     }
